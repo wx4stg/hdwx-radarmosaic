@@ -5,6 +5,7 @@ mkdir radarData/
 radarStr=`python3 fetchRadar.py`
 radars=($radarStr)
 i=0
+echo "Fetching data..."
 for radar in $radarStr
 do
     python3 fetchRadar.py $radar & >> /dev/null
@@ -25,6 +26,9 @@ for pid in ${pids[*]}
 do
     wait $pid
 done
+echo "Plotting national mosaic"
 python3 mosaic.py national
+echo "Plotting regional mosaic"
 python3 mosaic.py regional
+echo "Plotting local mosaic"
 python3 mosaic.py local

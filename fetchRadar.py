@@ -16,13 +16,10 @@ def getRadarData(connex, site):
         logFile.close()
     else:
         allScanTimes = [scan.scan_time for scan in allScans]
-        for scanTime in sorted(allScanTimes):
-            print(scanTime)
         warningString = str(dt.utcnow())+" "+site+" has not published data in the past 19 minutes\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()
-        print("\n\n\n\n\n")
     
 
 
