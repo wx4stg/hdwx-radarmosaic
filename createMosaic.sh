@@ -1,6 +1,7 @@
 #!/bin/bash
 export PYART_QUIET=TRUE
-rm -rf radarData/*
+rm -rf radarData/
+mkdir radarData/
 radarStr=`python3 fetchRadar.py`
 radars=($radarStr)
 i=0

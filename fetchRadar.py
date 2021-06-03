@@ -8,7 +8,7 @@ def getRadarData(connex, site):
     import pytz
     currentTime = dt.utcnow().replace(tzinfo=pytz.UTC)
     allScans = connex.get_avail_scans(currentTime.year, currentTime.month, currentTime.day, site)
-    if allScans[-1].scan_time > currentTime - timedelta(minutes=20):
+    if allScans[-1].scan_time > currentTime - timedelta(minutes=19):
         connex.download(allScans[-1], path.join(getcwd(), "radarData"))
         warningString = str(dt.utcnow())+" "+site+" used amazon backup\n"
         logFile = open("warnings.log", "a")
@@ -18,7 +18,7 @@ def getRadarData(connex, site):
         allScanTimes = [scan.scan_time for scan in allScans]
         for scanTime in sorted(allScanTimes):
             print(scanTime)
-        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 20 minutes\n"
+        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 19 minutes\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()
@@ -71,10 +71,12 @@ if __name__ == "__main__":
             lastScanFile = coriolisFiles[-1]
             lastScanTime = lastScanFile[-11:]
             lastScanTime = dt.strptime(lastScanTime, "%y%m%d_%H%M")
-            if lastScanTime > dt.utcnow() - timedelta(minutes=10):
+            if lastScanTime > dt.utcnow() - timedelta(minutes=19):
                 import shutil
                 radarSrcPath = path.join(radarDir, lastScanFile)
-                shutil.copy(radarSrcPath, "radarData/")
+                radarDestPath = path.join(getcwd(), "radarData")
+                radarDestPath = path.join(radarDestPath, "coriolis_"+radarSite+"_"+lastScanFile)
+                shutil.copy(radarSrcPath, radarDestPath)
             else:
                 amazonBackup(radarSite)
         except:
