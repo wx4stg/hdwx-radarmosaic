@@ -25,4 +25,6 @@ for pid in ${pids[*]}
 do
     wait $pid
 done
-python3 mosaic.py
+python3 mosaic.py national
+python3 mosaic.py regional
+python3 mosaic.py local
