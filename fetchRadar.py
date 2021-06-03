@@ -1,34 +1,50 @@
-import requests
-import pandas as pd
-import re
+#!/usr/bin/env python3
 import sys
-from nexradaws import NexradAwsInterface
-from datetime import datetime as dt
-import pytz
-from os import getcwd, path
 
 def nearest(items, pivot):
     return min(items, key=lambda x: abs(x - pivot))
 
-def getRadarData(connex, site, targ):
-    allScans = connex.get_avail_scans(targ.year, targ.month, targ.day, site)
-    scanTimes = [scan.scan_time for scan in allScans]
-    these_good_scans = []
-    these_good_times = []
-    for i in range(len(scanTimes)):
-        if scanTimes[i] is not None:
-            these_good_times.append(scanTimes[i])
-            these_good_scans.append(allScans[i])
-        else:
-            print("Invalid time at index", i)
-    this_nearest_time = nearest(these_good_times, targ)
-    this_index = these_good_times.index(this_nearest_time)
-    conn.download(these_good_scans[this_index], path.join(getcwd(), "radarData"))
+def getRadarData(connex, site):
+    import pytz
+    currentTime = dt.utcnow().replace(tzinfo=pytz.UTC)
+    allScans = connex.get_avail_scans(currentTime.year, currentTime.month, currentTime.day, site)
+    if allScans[-1].scan_time > currentTime - timedelta(minutes=20):
+        connex.download(allScans[-1], path.join(getcwd(), "radarData"))
+        warningString = str(dt.utcnow())+" "+site+" used amazon backup\n"
+        logFile = open("warnings.log", "a")
+        logFile.write(warningString)
+        logFile.close()
+    else:
+        allScanTimes = [scan.scan_time for scan in allScans]
+        for scanTime in sorted(allScanTimes):
+            print(scanTime)
+        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 20 minutes\n"
+        logFile = open("warnings.log", "a")
+        logFile.write(warningString)
+        logFile.close()
+        print("\n\n\n\n\n")
+    
+
+
+def amazonBackup(radarSite):
+    from nexradaws import NexradAwsInterface
+    try:
+        conn = NexradAwsInterface()
+        getRadarData(conn, radarSite)
+    except TypeError:
+        warningString = str(dt.utcnow())+" exception occurred when fetching "+radarSite+", skipping...\n"
+        logFile = open("warnings.log", "a")
+        logFile.write(warningString)
+        logFile.close()
+    
 
 
 if __name__ == "__main__":
     blackList = ["TJUA", "PABC", "PACG", "PAEC", "PAHG", "PAIH", "PAKC", "PAPD", "PGUA", "PHKI", "PHKM", "PHMO", "PHWA", "RKJK", "RKSG", "RODN"]
     if len(sys.argv) == 1:
+        import re
+        import pandas as pd
+        import requests
         s = requests.get("https://radar2pub.ncep.noaa.gov")
         s = s.text
         radarTables = pd.read_html(s)
@@ -44,10 +60,22 @@ if __name__ == "__main__":
                             radarSites.append(icaoStr)
                             print(icaoStr)
     else:
+        from datetime import datetime as dt
+        from os import getcwd, path, listdir
+        from datetime import timedelta
         radarSite = sys.argv[1]
-        time = dt.utcnow().replace(tzinfo=pytz.UTC)
-        conn = NexradAwsInterface()
-        try:        
-            radar = getRadarData(conn, radarSite, time)
-        except TypeError:
-            print(radarSite, "is offline")
+        radarDir = path.join("/coriolis-ldm/gempak/nexrad/NIDS/", radarSite[1:])
+        radarDir = path.join(radarDir, "N0Q")
+        try:
+            coriolisFiles = sorted(listdir(radarDir))
+            lastScanFile = coriolisFiles[-1]
+            lastScanTime = lastScanFile[-11:]
+            lastScanTime = dt.strptime(lastScanTime, "%y%m%d_%H%M")
+            if lastScanTime > dt.utcnow() - timedelta(minutes=10):
+                import shutil
+                radarSrcPath = path.join(radarDir, lastScanFile)
+                shutil.copy(radarSrcPath, "radarData/")
+            else:
+                amazonBackup(radarSite)
+        except:
+            amazonBackup(radarSite)
