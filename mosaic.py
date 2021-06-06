@@ -18,7 +18,7 @@ if __name__ == "__main__":
     start_exec = dt.now()
     px = 1/plt.rcParams['figure.dpi']
     fig = plt.figure()
-    fig.set_size_inches(1880*px, 1025*px)
+    fig.set_size_inches(1.227*1880*px, 1.217*1025*px)
     time = dt.utcnow().replace(tzinfo=pytz.UTC)
     radarsToPlot = []
     gateFilters = []
@@ -39,17 +39,17 @@ if __name__ == "__main__":
     radarsToPlot = tuple(radarsToPlot)
     gateFilters = tuple(gateFilters)
     if sys.argv[1] == "local":
-        gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
-        gridOrig = (39.83333, -98.58333)
+        gridExtent = ((0.,1.),(-220000.,220000.),(-375000.,375000.))
+        gridOrig = (30.55, -97.825)
         axExtent = [-101.65, -94, 28.6, 32.5]
     elif sys.argv[1] == "regional":
-        gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
-        gridOrig = (39.83333, -98.58333)
+        gridExtent = ((0.,1.),(-860000.,860000.),(-1272000.,1272000.))
+        gridOrig = (30.05, -97.5)
         axExtent = [-110, -85, 23.5, 36.600704]
     elif sys.argv[1] == "national":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
         gridOrig = (39.83333, -98.58333)
-        axExtent = [-124.848974, -66.885444, 21, 49]
+        axExtent = [-124.848974, -66.885444, 22, 48]
     grids = pyart.map.grid_from_radars(radarsToPlot,
         (1,1600,1600),
         gridExtent,
@@ -60,7 +60,6 @@ if __name__ == "__main__":
         )
     xgrids = grids.to_xarray()
     ax = plt.axes(projection=ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"]))
-    #ax = plt.subplot2grid((2, 3), (0, 0), colspan=3, projection=ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"]))
     ax.set_extent(axExtent)
     ax.add_feature(cfeat.STATES)
     ax.add_feature(cfeat.COASTLINE)
@@ -68,11 +67,9 @@ if __name__ == "__main__":
         ax.add_feature(USCOUNTIES.with_scale("5m"), edgecolor="green")
     ax.axis("off")
     norm, cmap = ctables.registry.get_with_steps("NWSReflectivity", 10, 5)
-    #cmap = ctables.registry.get_colortable('NWSReflectivity')
     cmap.set_under("#00000000")
-    cmap.set_over("white")
-    #norm = mplc.Normalize(vmin=5, vmax=90)
-    pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False)
+    cmap.set_over("black")
+    pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False, zorder=0)
     ax.set_title("")
     extent = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(fig.dpi_scale_trans.inverted())
     fig.savefig("mosaic.png", bbox_inches=extent, transparent=True)
