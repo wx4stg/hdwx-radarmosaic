@@ -42,14 +42,17 @@ if __name__ == "__main__":
         gridExtent = ((0.,1.),(-220000.,220000.),(-375000.,375000.))
         gridOrig = (30.55, -97.825)
         axExtent = [-101.65, -94, 28.6, 32.5]
+        titleStr = "Local Radar Mosaic"
     elif sys.argv[1] == "regional":
         gridExtent = ((0.,1.),(-860000.,860000.),(-1272000.,1272000.))
         gridOrig = (30.05, -97.5)
         axExtent = [-110, -85, 23.5, 36.600704]
+        titleStr = "Regional Radar Mosaic"
     elif sys.argv[1] == "national":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
         gridOrig = (39.83333, -98.58333)
         axExtent = [-124.848974, -66.885444, 22, 48]
+        titleStr = "National Radar Mosaic"
     grids = pyart.map.grid_from_radars(radarsToPlot,
         (1,1600,1600),
         gridExtent,
@@ -76,6 +79,11 @@ if __name__ == "__main__":
     cbax = fig.add_axes([ax.get_position().x0,0.075,(ax.get_position().width/3),.02])
     cb = fig.colorbar(pc, cax=cbax, orientation="horizontal")
     cbax.set_xlabel("Reflectivity (dBZ)", backgroundcolor="white")
+    tax = fig.add_axes([ax.get_position().x0+cbax.get_position().width+.01,0.045,(ax.get_position().width/3),.05])
+    tax.axis("off")
+    timeOfPull = dt(time.year, time.month, time.day, time.hour, 5*(time.minute//5), 0)
+    timeStr = timeOfPull.strftime("Valid %-d %b %Y %H%MZ")
+    tax.text(0.5, 0.5, titleStr+"\n"+timeStr, horizontalalignment="center", verticalalignment="center", fontsize=16)
     fig.set_facecolor("white")
     fig.savefig("fullFig.png", bbox_inches="tight")
 
