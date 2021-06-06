@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Radar fetching from "coriolis" LDM (or Amazon AWS, if necessary) for next-gen HDWX
+# Created 2 June 2021 by Sam Gardner <stgardner4@tamu.edu>
 import sys
 
 def nearest(items, pivot):

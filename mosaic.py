@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-#  Next-gen HDWX radar mosaic script by Sam Gardner <stgardner4@tamu.edu>
-# Created 8 May 2021
+# Next-gen HDWX radar mosaic script
+# Created 8 May 2021 by Sam Gardner <stgardner4@tamu.edu>
 from datetime import datetime as dt
 import pytz
 from matplotlib import pyplot as plt
@@ -11,7 +11,6 @@ from metpy.plots import ctables
 from metpy.plots import USCOUNTIES
 from matplotlib import colors as mplc
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from os import getcwd, path, listdir
 import sys
 
@@ -42,7 +41,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "local":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
         gridOrig = (39.83333, -98.58333)
-        axExtent = [-100.65, -93, 28.6, 32.5]
+        axExtent = [-101.65, -94, 28.6, 32.5]
     elif sys.argv[1] == "regional":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
         gridOrig = (39.83333, -98.58333)
@@ -61,24 +60,25 @@ if __name__ == "__main__":
         )
     xgrids = grids.to_xarray()
     ax = plt.axes(projection=ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"]))
+    #ax = plt.subplot2grid((2, 3), (0, 0), colspan=3, projection=ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"]))
     ax.set_extent(axExtent)
     ax.add_feature(cfeat.STATES)
     ax.add_feature(cfeat.COASTLINE)
     if sys.argv[1] == "local" or sys.argv[1] == "regional":
         ax.add_feature(USCOUNTIES.with_scale("5m"), edgecolor="green")
     ax.axis("off")
-    cmap = ctables.registry.get_colortable('NWSReflectivity')
+    norm, cmap = ctables.registry.get_with_steps("NWSReflectivity", 10, 5)
+    #cmap = ctables.registry.get_colortable('NWSReflectivity')
     cmap.set_under("#00000000")
-    cmap.set_over("black")
-    norm = mplc.Normalize(vmin=5, vmax=90)
+    cmap.set_over("white")
+    #norm = mplc.Normalize(vmin=5, vmax=90)
     pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False)
     ax.set_title("")
     extent = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(fig.dpi_scale_trans.inverted())
     fig.savefig("mosaic.png", bbox_inches=extent, transparent=True)
-    divider = make_axes_locatable(ax)
-    insAx = inset_axes(ax, width="50%", height="5%", loc="lower left")
-    cb = fig.colorbar(pc, cax=insAx, orientation="horizontal")
-    insAx.set_xlabel("Reflectivity (dBZ)", backgroundcolor="white", labelpad=1)
+    cbax = fig.add_axes([ax.get_position().x0,0.075,(ax.get_position().width/3),.02])
+    cb = fig.colorbar(pc, cax=cbax, orientation="horizontal")
+    cbax.set_xlabel("Reflectivity (dBZ)", backgroundcolor="white")
     fig.set_facecolor("white")
-    fig.savefig("fullFig.png")
+    fig.savefig("fullFig.png", bbox_inches="tight")
 
