@@ -3,6 +3,7 @@ MY_DIR=`pwd`
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd $SCRIPT_DIR
 min=`date +"%M"`
+(( minToPass=5*((min)/5) ))
 min=$(($min%10))
 if [ "$min" -le "5" ]
 then
@@ -35,13 +36,13 @@ do
     done
     cd ../../../../
 done
-radarStr=`python3 fetchRadar.py`
+radarStr=`~/miniconda3/envs/HDWX/bin/python3 fetchRadar.py`
 radars=($radarStr)
 i=0
 echo "Fetching data..."
 for radar in $radarStr
 do
-    python3 fetchRadar.py $radar & >> /dev/null
+    ~/miniconda3/envs/HDWX/bin/python3 fetchRadar.py $radar & >> /dev/null
     pids[${i}]=$!
     ((i=i+1))
     while [ ${#pids[@]} == 50 ]
@@ -62,14 +63,14 @@ done
 if [ $min == 0 ]
 then
     echo "Plotting national mosaic"
-    python3 mosaic.py national $min &
+    ~/miniconda3/envs/HDWX/bin/python3 mosaic.py national $minToPass &
     pypids[0]=$!
 fi
 echo "Plotting regional mosaic"
-python3 mosaic.py regional $min &
+~/miniconda3/envs/HDWX/bin/python3 mosaic.py regional $minToPass &
 pypids[1]=$!
 echo "Plotting local mosaic"
-python3 mosaic.py local $min &
+~/miniconda3/envs/HDWX/bin/python3 mosaic.py local $minToPass &
 pypids[2]=$!
 for pypid in ${pypids[*]}
 do
