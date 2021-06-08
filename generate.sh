@@ -1,8 +1,24 @@
 #!/bin/bash
+MY_DIR=`pwd`
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd $SCRIPT_DIR
+min=`date +"%M"`
+min=$(($min%10))
+if [ "$min" -le "5" ]
+then
+    min=0
+else
+    min=5
+fi
 export PYART_QUIET=TRUE
 rm -rf radarData/
 mkdir radarData/
-declare -a targetDirs=("./output/products/radar/local" "./output/products/radar/regional" "./output/products/radar/national" "./output/gisproducts/radar/local" "./output/gisproducts/radar/regional" "./output/gisproducts/radar/national")
+if [ $min == 0 ]
+then
+    declare -a targetDirs=("./output/products/radar/local" "./output/products/radar/regional" "./output/products/radar/national" "./output/gisproducts/radar/local" "./output/gisproducts/radar/regional" "./output/gisproducts/radar/national")
+else
+    declare -a targetDirs=("./output/products/radar/local" "./output/products/radar/regional" "./output/gisproducts/radar/local" "./output/gisproducts/radar/regional")
+fi
 for targetDir in "${targetDirs[@]}"
 do
     mkdir -p $targetDir
@@ -43,17 +59,20 @@ for pid in ${pids[*]}
 do
     wait $pid
 done
-if [ "$1" == "--include-national" ]
+if [ $min == 0 ]
 then
     echo "Plotting national mosaic"
-    python3 mosaic.py national
+    python3 mosaic.py national $min &
+    pypids[0]=$!
 fi
 echo "Plotting regional mosaic"
-python3 mosaic.py regional
+python3 mosaic.py regional $min &
+pypids[1]=$!
 echo "Plotting local mosaic"
-python3 mosaic.py local
-if [ "$1" == "--publish" ] || [ "$2" == "--publish" ]
-then
-    echo "Sending to public-facing directory..."
-    rsync -r output/ /var/www/html/wx4stg/.
-fi
+python3 mosaic.py local $min &
+pypids[2]=$!
+for pypid in ${pypids[*]}
+do
+    wait $pypid
+done
+cd $MY_DIR

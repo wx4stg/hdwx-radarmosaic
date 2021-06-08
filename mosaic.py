@@ -94,7 +94,7 @@ if __name__ == "__main__":
     cb = fig.colorbar(pc, cax=cbax, orientation="horizontal", extend="neither")
     cbax.set_xlabel("Reflectivity (dBZ)")
     tax = fig.add_axes([ax.get_position().x0+cbax.get_position().width+.01,0.045,(ax.get_position().width/3),.05])
-    timeOfPull = dt(time.year, time.month, time.day, time.hour, 5*(time.minute//5), 0)
+    timeOfPull = dt(time.year, time.month, time.day, time.hour, int(sys.argv[2]), 0)
     timeStr = timeOfPull.strftime("Valid %-d %b %Y %H%MZ")
     tax.text(0.5, 0.5, titleStr+"\n"+timeStr, horizontalalignment="center", verticalalignment="center", fontsize=16)
     tax.set_xlabel("Python HDWX -- Send bugs to stgardner4@tamu.edu")
