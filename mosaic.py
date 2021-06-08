@@ -18,6 +18,7 @@ import sys
 if __name__ == "__main__":
     start_exec = dt.now()
     px = 1/plt.rcParams["figure.dpi"]
+    basePath = path.join(getcwd(), "output")
     fig = plt.figure()
     fig.set_size_inches(1.227*1880*px, 1.217*1025*px)
     time = dt.utcnow().replace(tzinfo=pytz.UTC)
@@ -45,18 +46,23 @@ if __name__ == "__main__":
         axExtent = [-101.65, -94, 28.6, 32.5]
         titleStr = "Local Radar Mosaic"
         featLinewidth = 4
+        saveDir = "radar/local/"
     elif sys.argv[1] == "regional":
         gridExtent = ((0.,1.),(-860000.,860000.),(-1272000.,1272000.))
         gridOrig = (30.05, -97.5)
         axExtent = [-110, -85, 23.5, 36.600704]
         titleStr = "Regional Radar Mosaic"
         featLinewidth = 3
+        saveDir = "radar/regional/"
     elif sys.argv[1] == "national":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
         gridOrig = (39.83333, -98.58333)
         axExtent = [-124.848974, -66.885444, 22, 48]
         titleStr = "National Radar Mosaic"
         featLinewidth = 1
+        saveDir = "radar/national/"
+    classicSavePath = path.join(path.join(basePath, "products"), saveDir)
+    gisSavePath = path.join(path.join(basePath, "gisproducts"), saveDir)
     grids = pyart.map.grid_from_radars(radarsToPlot,
         (1,1600,1600),
         gridExtent,
@@ -83,7 +89,7 @@ if __name__ == "__main__":
     pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False, zorder=0)
     ax.set_title("")
     extent = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(fig.dpi_scale_trans.inverted())
-    fig.savefig("mosaic.png", bbox_inches=extent, transparent=True)
+    fig.savefig(path.join(gisSavePath, "frame9.png"), bbox_inches=extent, transparent=True)
     cbax = fig.add_axes([ax.get_position().x0,0.075,(ax.get_position().width/3),.02])
     cb = fig.colorbar(pc, cax=cbax, orientation="horizontal", extend="neither")
     cbax.set_xlabel("Reflectivity (dBZ)")
@@ -102,5 +108,5 @@ if __name__ == "__main__":
     atmoLogo = mpimage.imread("assets/atmoLogo.png")
     lax.imshow(atmoLogo)
     fig.set_facecolor("white")
-    fig.savefig("fullFig.png", bbox_inches="tight")
+    fig.savefig(path.join(classicSavePath, "frame9.png"), bbox_inches="tight")
 
