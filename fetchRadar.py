@@ -30,8 +30,8 @@ def amazonBackup(radarSite):
     try:
         conn = NexradAwsInterface()
         getRadarData(conn, radarSite)
-    except TypeError:
-        warningString = str(dt.utcnow())+" exception occurred when fetching "+radarSite+", skipping...\n"
+    except TypeError as e:
+        warningString = str(dt.utcnow())+" exception occurred when fetching "+radarSite+": "+str(e)+"\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()

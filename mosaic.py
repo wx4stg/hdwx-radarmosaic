@@ -27,7 +27,14 @@ if __name__ == "__main__":
     radarDataDir = path.join(getcwd(), "radarData")
     for radarFileName in listdir(radarDataDir):
         radarFilePath = path.join(radarDataDir, radarFileName)
-        radar = pyart.io.read(radarFilePath)
+        try:
+            radar = pyart.io.read(radarFilePath)
+        except Exception as e:
+            warningString = str(dt.utcnow())+" error reading "+radarFileName+": "+str(e)+"\n"
+            logFile = open("warnings.log", "a")
+            logFile.write(warningString)
+            logFile.close()
+            continue
         radar = radar.extract_sweeps([0])
         for field in radar.fields.copy():
             if field != "reflectivity":
