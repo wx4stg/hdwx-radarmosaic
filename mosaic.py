@@ -48,23 +48,20 @@ if __name__ == "__main__":
     radarsToPlot = tuple(radarsToPlot)
     gateFilters = tuple(gateFilters)
     if sys.argv[1] == "local":
-        gridExtent = ((0.,1.),(-220000.,220000.),(-375000.,375000.))
-        gridOrig = (30.55, -97.825)
-        axExtent = [-101.65, -94, 28.6, 32.5]
+        gridExtent = ((0.,1.),(-220000.,220000.),(-420000.,420000.))
+        axExtent = [-101, -92.4, 28.6, 32.5]
         titleStr = "Local Radar Mosaic"
         featLinewidth = 4
         saveDir = "radar/local/"
     elif sys.argv[1] == "regional":
         gridExtent = ((0.,1.),(-860000.,860000.),(-1272000.,1272000.))
-        gridOrig = (30.05, -97.5)
-        axExtent = [-110, -85, 23.5, 36.600704]
+        axExtent = [-110, -85, 23.5, 37]
         titleStr = "Regional Radar Mosaic"
         featLinewidth = 3
         saveDir = "radar/regional/"
     elif sys.argv[1] == "national":
         gridExtent = ((0.,1.),(-1567000.,1567000.),(-2931500.,2931500.))
-        gridOrig = (39.83333, -98.58333)
-        axExtent = [-124.848974, -66.885444, 22, 48]
+        axExtent = [-124.848974, -66.885444, 23, 48]
         titleStr = "National Radar Mosaic"
         featLinewidth = 1
         saveDir = "radar/national/"
@@ -76,10 +73,11 @@ if __name__ == "__main__":
         weighting_function="nearest",
         fields=["reflectivity"],
         gatefilters=gateFilters,
-        grid_origin=gridOrig
+        grid_origin=((axExtent[2]+axExtent[3])/2, (axExtent[0]+axExtent[1])/2)
         )
     xgrids = grids.to_xarray()
-    ax = plt.axes(projection=ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"]))
+    dataProj = ccrs.AzimuthalEquidistant(central_latitude=grids.get_projparams()["lat_0"], central_longitude=grids.get_projparams()["lon_0"])
+    ax = plt.axes(projection=ccrs.epsg(3857))
     ax.set_extent(axExtent)
     if  sys.argv[1] == "regional":
         ax.add_feature(USCOUNTIES.with_scale("5m"), edgecolor="green")
@@ -93,7 +91,7 @@ if __name__ == "__main__":
     norm, cmap = ctables.registry.get_with_steps("NWSReflectivity", 10, 5)
     cmap.set_under("#00000000")
     cmap.set_over("black")
-    pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False, zorder=0)
+    pc = xgrids.reflectivity.sel(z=0, time=xgrids.time[0], method="nearest").plot.pcolormesh(norm=norm, cmap=cmap, ax=ax, add_colorbar=False, zorder=0, transform=dataProj)
     ax.set_title("")
     extent = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(fig.dpi_scale_trans.inverted())
     fig.savefig(path.join(gisSavePath, "frame9.png"), bbox_inches=extent, transparent=True)
