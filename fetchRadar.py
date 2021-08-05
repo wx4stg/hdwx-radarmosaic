@@ -10,15 +10,14 @@ def getRadarData(connex, site):
     import pytz
     currentTime = dt.utcnow().replace(tzinfo=pytz.UTC)
     allScans = connex.get_avail_scans(currentTime.year, currentTime.month, currentTime.day, site)
-    if allScans[-1].scan_time > currentTime - timedelta(minutes=19):
+    if allScans[-1].scan_time > currentTime - timedelta(minutes=10):
         connex.download(allScans[-1], path.join(getcwd(), "radarData"))
         warningString = str(dt.utcnow())+" "+site+" used amazon backup\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()
     else:
-        allScanTimes = [scan.scan_time for scan in allScans]
-        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 19 minutes\n"
+        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 10 minutes\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()
@@ -44,6 +43,7 @@ if __name__ == "__main__":
         import re
         import pandas as pd
         import requests
+        from pytimeparse.timeparse import timeparse
         s = requests.get("https://radar2pub.ncep.noaa.gov")
         s = s.text
         radarTables = pd.read_html(s)
@@ -56,11 +56,18 @@ if __name__ == "__main__":
                     icaoStr = " ".join(re.findall("[a-zA-Z]+", radarStr))
                     if icaoStr not in radarSites:
                         if icaoStr not in blackList:
-                            radarSites.append(icaoStr)
-                            print(icaoStr)
+                            chk = requests.get("https://radar2pub.ncep.noaa.gov/site/"+icaoStr.lower()+".html")
+                            chk = chk.text
+                            chkTable = pd.read_html(chk)
+                            chkTable = chkTable[0]
+                            updateTime = str(chkTable[chkTable[0].str.contains("Last update")].loc[2, 1])
+                            updateTime = timeparse(updateTime)
+                            if updateTime < 600:
+                                radarSites.append(icaoStr)
+                                print(icaoStr)
     else:
         from datetime import datetime as dt
-        from os import getcwd, path, listdir
+        from os import path, listdir
         from datetime import timedelta
         radarSite = sys.argv[1]
         radarDir = path.join("/coriolis-ldm/gempak/nexrad/NIDS/", radarSite[1:])
@@ -73,7 +80,7 @@ if __name__ == "__main__":
             if lastScanTime > dt.utcnow() - timedelta(minutes=19):
                 import shutil
                 radarSrcPath = path.join(radarDir, lastScanFile)
-                radarDestPath = path.join(getcwd(), "radarData")
+                radarDestPath = path.join(path.dirname(path.abspath(__file__)), "radarData")
                 radarDestPath = path.join(radarDestPath, "coriolis_"+radarSite+"_"+lastScanFile)
                 shutil.copy(radarSrcPath, radarDestPath)
             else:
