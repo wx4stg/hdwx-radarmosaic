@@ -1,10 +1,10 @@
 #!/bin/bash
-# cache original directory to allow for clean exit
-MY_DIR=`pwd`
-# Get and change to the containing dir
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd $SCRIPT_DIR
-# Get current time minutes for the "Valid" label. Round to nearest 5 for cleanliness
+export PYART_QUIET=TRUE
+# Get current time minutes for the "Valid" label and API data. Round to nearest 5 for cleanliness...
+# I can't make a mosaic at exactly every 5th minute, as not all of the data from radars will have been pushed
+# to coriolis or aws. So the 00:00 mosaic may contain radar data gathered at 00:01 (if that particular radar site has a fast enough uplink)
+# and may not contain the data from all sites gathered before 00:00 (if their link is unusually slow)
+# This is obviously an imperfect solution, but it was the best I could think of...
 min=`date +"%M"`
 (( minToPass=5*((min)/5) ))
 min=$(($min%10))
@@ -14,39 +14,9 @@ then
 else
     min=5
 fi
-export PYART_QUIET=TRUE
 # Delete and re-create directory for raw reflectivity data
 rm -rf radarData/
 mkdir radarData/
-# Determine if we want a national mosaic (every 10min) or just a local/regional (every 5 min)
-if [ $min == 0 ]
-then
-    declare -a targetDirs=("./output/products/radar/local" "./output/products/radar/regional" "./output/products/radar/national" "./output/gisproducts/radar/local" "./output/gisproducts/radar/regional" "./output/gisproducts/radar/national")
-else
-    declare -a targetDirs=("./output/products/radar/local" "./output/products/radar/regional" "./output/gisproducts/radar/local" "./output/gisproducts/radar/regional")
-fi
-# In output directory, delete frame0.png, rename frame1.png -> frame0.png, rename frame2.png -> frame1.png, etc...
-for targetDir in "${targetDirs[@]}"
-do
-# Create target dir if it doesn't already exist
-    mkdir -p $targetDir
-# Change to target dir
-    cd $targetDir
-# Delete frame0.png
-    rm *0*
-# Black magic I stole from stackoverflow... /shrug
-    for file in *
-    do 
-        name=${file#*}
-        prefix=${name%.*}
-        idx=${prefix##*[[:alpha:]]}
-        prefix=${prefix%%[0-9]*}
-        suffix=${name##*.}
-        mv -i "$file" "${prefix}""$(printf '%d' $((10#$idx-1)))"."${suffix}"
-    done
-# Return to the original directory
-    cd ../../../../
-done
 # Get a list of every radar we want to pull data from
 radarStr=`~/miniconda3/envs/HDWX/bin/python3 fetchRadar.py`
 radars=($radarStr)
@@ -73,29 +43,24 @@ do
         done
     done
 done
-# wait for the last 10 procs to exit
+# wait for the last 50 procs to exit
 for pid in ${pids[*]}
 do
     wait $pid
 done
-# Plot regional and local mosaics
+# Plot mosaics
 echo "Plotting regional mosaic"
 ~/miniconda3/envs/HDWX/bin/python3 mosaic.py regional $minToPass &
 pypids[0]=$!
 echo "Plotting local mosaic"
 ~/miniconda3/envs/HDWX/bin/python3 mosaic.py local $minToPass &
 pypids[1]=$!
-# Plot national mosaic, if we want that
-if [ $min == 0 ]
-then
-    echo "Plotting national mosaic"
-    ~/miniconda3/envs/HDWX/bin/python3 mosaic.py national $minToPass &
-    pypids[2]=$!
-fi
+echo "Plotting national mosaic"
+~/miniconda3/envs/HDWX/bin/python3 mosaic.py national $minToPass &
+pypids[2]=$!
 # Wait on those to exit
 for pypid in ${pypids[*]}
 do
     wait $pypid
 done
-# go back to where we started
-cd $MY_DIR
+# metadata handling script
