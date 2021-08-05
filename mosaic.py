@@ -10,7 +10,7 @@ import cartopy.feature as cfeat
 from metpy.plots import ctables
 from metpy.plots import USCOUNTIES
 from matplotlib import image as mpimage
-from os import getcwd, path, listdir
+from os import path, listdir
 from pathlib import Path
 import sys
 import json
@@ -33,11 +33,11 @@ def writeJson(productID, doesSupportGIS):
         json.dump(productFrameDict, fileToWrite, indent=4)
 
 if __name__ == "__main__":
-    basePath = path.join(getcwd(), "output")
-    tmpFrameMetaStorage = path.join(getcwd(), "frameMetaData/")
+    basePath = path.join(path.dirname(path.abspath(__file__)), "output")
+    tmpFrameMetaStorage = path.join(path.dirname(path.abspath(__file__)), "frameMetaData/")
     Path(tmpFrameMetaStorage).mkdir(parents=True, exist_ok=True)
     metadataBasePath = path.join(basePath, "metadata")
-    radarDataDir = path.join(getcwd(), "radarData")
+    radarDataDir = path.join(path.dirname(path.abspath(__file__)), "radarData")
     fig = plt.figure()
     px = 1/plt.rcParams["figure.dpi"]
     fig.set_size_inches(1.227*1880*px, 1.217*1025*px)
