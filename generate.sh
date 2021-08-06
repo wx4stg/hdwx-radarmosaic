@@ -7,13 +7,6 @@ export PYART_QUIET=TRUE
 # This is obviously an imperfect solution, but it was the best I could think of...
 min=`date +"%M"`
 (( minToPass=5*((min)/5) ))
-min=$(($min%10))
-if [ "$min" -le "5" ]
-then
-    min=0
-else
-    min=5
-fi
 # Delete and re-create directory for raw reflectivity data
 rm -rf radarData/
 mkdir radarData/
@@ -64,3 +57,4 @@ do
     wait $pypid
 done
 # metadata handling script
+~/miniconda3/envs/HDWX/bin/python3 jsonManager.py 
