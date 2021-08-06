@@ -1,6 +1,5 @@
 #!/bin/bash
 export PYART_QUIET=TRUE
-rm status.txt
 echo "Fetching Radars..." >> status.txt
 # Get current time minutes for the "Valid" label and API data. Round to nearest 5 for cleanliness...
 # I can't make a mosaic at exactly every 5th minute, as not all of the data from radars will have been pushed
