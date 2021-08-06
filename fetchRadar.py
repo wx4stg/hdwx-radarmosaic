@@ -11,7 +11,7 @@ def getRadarData(connex, site):
     currentTime = dt.utcnow().replace(tzinfo=pytz.UTC)
     allScans = connex.get_avail_scans(currentTime.year, currentTime.month, currentTime.day, site)
     if allScans[-1].scan_time > currentTime - timedelta(minutes=10):
-        connex.download(allScans[-1], path.join(getcwd(), "radarData"))
+        connex.download(allScans[-1], path.join(path.dirname(path.abspath(__file__)), "radarData"))
         warningString = str(dt.utcnow())+" "+site+" used amazon backup\n"
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             lastScanFile = coriolisFiles[-1]
             lastScanTime = lastScanFile[-11:]
             lastScanTime = dt.strptime(lastScanTime, "%y%m%d_%H%M")
-            if lastScanTime > dt.utcnow() - timedelta(minutes=19):
+            if lastScanTime > dt.utcnow() - timedelta(minutes=10):
                 import shutil
                 radarSrcPath = path.join(radarDir, lastScanFile)
                 radarDestPath = path.join(path.dirname(path.abspath(__file__)), "radarData")
