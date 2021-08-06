@@ -17,7 +17,7 @@ def getRadarData(connex, site):
         logFile.write(warningString)
         logFile.close()
     else:
-        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 10 minutes\n"
+        warningString = str(dt.utcnow())+" "+site+" has not published data in the past 10 minutes, last scan was "+allScans[-1].scan_time.strftime("%H:%M UTC\n")
         logFile = open("warnings.log", "a")
         logFile.write(warningString)
         logFile.close()
@@ -84,6 +84,7 @@ if __name__ == "__main__":
                 radarDestPath = path.join(radarDestPath, "coriolis_"+radarSite+"_"+lastScanFile)
                 shutil.copy(radarSrcPath, radarDestPath)
             else:
+
                 amazonBackup(radarSite)
         except:
             amazonBackup(radarSite)
