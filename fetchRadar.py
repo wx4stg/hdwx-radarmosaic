@@ -56,14 +56,21 @@ if __name__ == "__main__":
                     icaoStr = " ".join(re.findall("[a-zA-Z]+", radarStr))
                     if icaoStr not in radarSites:
                         if icaoStr not in blackList:
-                            chk = requests.get("https://radar2pub.ncep.noaa.gov/site/"+icaoStr.lower()+".html")
-                            chk = chk.text
-                            chkTable = pd.read_html(chk)
-                            chkTable = chkTable[0]
-                            updateTime = str(chkTable[chkTable[0].str.contains("Last update")].loc[2, 1])
-                            updateTime = timeparse(updateTime)
-                            if updateTime < 600:
-                                radarSites.append(icaoStr)
+                            try:
+                                chk = requests.get("https://radar2pub.ncep.noaa.gov/site/"+icaoStr.lower()+".html")
+                                chk = chk.text
+                                chkTable = pd.read_html(chk)
+                                chkTable = chkTable[0]
+                                updateTime = str(chkTable[chkTable[0].str.contains("Last update")].loc[2, 1])
+                                updateTime = timeparse(updateTime)
+                                if updateTime < 600:
+                                    radarSites.append(icaoStr)
+                                    print(icaoStr)
+                            except Exception as e:
+                                warningString = str(dt.utcnow())+" exception occurred when checking status of "+icaoStr+": "+str(e)+"\n"
+                                logFile = open("warnings.log", "a")
+                                logFile.write(warningString)
+                                logFile.close()
                                 print(icaoStr)
     else:
         from datetime import datetime as dt
