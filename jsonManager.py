@@ -34,10 +34,10 @@ if __name__ == "__main__":
                     "totalFrameCount" : 12,
                     "productFrames" : framesArray
                 }
+                Path(saveFilePath).mkdir(parents=True, exist_ok=True)
                 saveFilePath = path.join(path.join(metadataOutDir, "products/"), productID)
                 for oldMetaData in listdir(saveFilePath):
                     remove(path.join(saveFilePath, oldMetaData))
-                Path(saveFilePath).mkdir(parents=True, exist_ok=True)
                 saveFilePath = path.join(saveFilePath, publishTime.strftime("%Y%m%d%H00")+".json")
                 with open(saveFilePath, "w") as jsonWrite:
                     json.dump(productRunDict, jsonWrite, indent=4)
