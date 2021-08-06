@@ -34,8 +34,8 @@ if __name__ == "__main__":
                     "totalFrameCount" : 12,
                     "productFrames" : framesArray
                 }
-                Path(saveFilePath).mkdir(parents=True, exist_ok=True)
                 saveFilePath = path.join(path.join(metadataOutDir, "products/"), productID)
+                Path(saveFilePath).mkdir(parents=True, exist_ok=True)
                 for oldMetaData in listdir(saveFilePath):
                     remove(path.join(saveFilePath, oldMetaData))
                 saveFilePath = path.join(saveFilePath, publishTime.strftime("%Y%m%d%H00")+".json")
