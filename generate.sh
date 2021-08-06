@@ -1,5 +1,7 @@
 #!/bin/bash
 export PYART_QUIET=TRUE
+rm status.txt
+echo "Fetching Radars..." >> status.txt
 # Get current time minutes for the "Valid" label and API data. Round to nearest 5 for cleanliness...
 # I can't make a mosaic at exactly every 5th minute, as not all of the data from radars will have been pushed
 # to coriolis or aws. So the 00:00 mosaic may contain radar data gathered at 00:01 (if that particular radar site has a fast enough uplink)
@@ -14,7 +16,7 @@ mkdir radarData/
 radarStr=`~/miniconda3/envs/HDWX/bin/python3 fetchRadar.py`
 radars=($radarStr)
 i=0
-echo "Fetching data..."
+echo "Fetching data..." >> status.txt
 # I was particularly proud of how clever this was... 50 workers at a time pulling radar data
 for radar in $radarStr
 do
@@ -42,13 +44,13 @@ do
     wait $pid
 done
 # Plot mosaics
-echo "Plotting regional mosaic"
+echo "Plotting regional mosaic" >> status.txt
 ~/miniconda3/envs/HDWX/bin/python3 mosaic.py regional $minToPass &
 pypids[0]=$!
-echo "Plotting local mosaic"
+echo "Plotting local mosaic" >> status.txt
 ~/miniconda3/envs/HDWX/bin/python3 mosaic.py local $minToPass &
 pypids[1]=$!
-echo "Plotting national mosaic"
+echo "Plotting national mosaic" >> status.txt
 ~/miniconda3/envs/HDWX/bin/python3 mosaic.py national $minToPass &
 pypids[2]=$!
 # Wait on those to exit
@@ -56,5 +58,7 @@ for pypid in ${pypids[*]}
 do
     wait $pypid
 done
+echo "Metadataing..." >> status.txt
 # metadata handling script
 ~/miniconda3/envs/HDWX/bin/python3 jsonManager.py 
+rm status.txt
